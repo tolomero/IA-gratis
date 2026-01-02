@@ -29,4 +29,5 @@ export const groqService: IAIService= {
     }
 }
 
-//curl.exe -X POST http://localhost:3000/chat -H "Content-Type: application/json" -d "{\"messages\": [{\"role\": \"user\", \"content\": \"Hola, ¿cómo estás?\"}]}"
+//$body = @{ messages = @(@{ role = "user"; content = "Tu pregunta aquí" }) } | ConvertTo-Json
+//Invoke-RestMethod -Uri "http://kgwgcgogs0kcs0k040wc48ks.34.136.123.178.sslip.io/chat" -Method Post -ContentType "application/json" -Body $body
