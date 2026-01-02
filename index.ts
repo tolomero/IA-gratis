@@ -14,17 +14,45 @@ const server = Bun.serve({
     async fetch(req) {
         const {pathname} = new URL(req.url);
         if(req.method === 'POST' && pathname === "/chat"){
-            const {messages} = await req.json() as {messages: ChatMessage[]};
-            const service = getNextService();
-            console.log(`Using service: ${service?.name} service`);
-            const stream = await service?.chat(messages);
-            return new Response(stream, {
-                headers: {
-                    'Content-Type': 'text/event-stream',
-                    'Cache-Control': 'no-cache',
-                    'Connection': 'keep-alive'
+            try {
+                const body = await req.json() as {messages: ChatMessage[]};
+                const {messages} = body;
+                
+                if(!messages || !Array.isArray(messages) || messages.length === 0){
+                    return new Response(JSON.stringify({error: "Invalid messages format"}), {
+                        status: 400,
+                        headers: {'Content-Type': 'application/json'}
+                    });
                 }
-            });
+
+                const service = getNextService();
+                if(!service){
+                    return new Response(JSON.stringify({error: "No service available"}), {
+                        status: 500,
+                        headers: {'Content-Type': 'application/json'}
+                    });
+                }
+
+                console.log(`Using service: ${service.name}`);
+                const stream = await service.chat(messages);
+                
+                return new Response(stream, {
+                    headers: {
+                        'Content-Type': 'text/event-stream',
+                        'Cache-Control': 'no-cache',
+                        'Connection': 'keep-alive'
+                    }
+                });
+            } catch (error) {
+                console.error('Error processing request:', error);
+                return new Response(JSON.stringify({
+                    error: "Something went wrong!",
+                    details: error instanceof Error ? error.message : String(error)
+                }), {
+                    status: 500,
+                    headers: {'Content-Type': 'application/json'}
+                });
+            }
         }
         return new Response("Not found", {status: 404});
     }
